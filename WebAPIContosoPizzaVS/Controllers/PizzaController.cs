@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using WebAPIContosoPizzaVS.Models;
 using WebAPIContosoPizzaVS.Services;
+using Microsoft.Data.Sqlite;
 
 namespace WebAPIContosoPizzaVS.Controllers
 {
@@ -8,28 +9,30 @@ namespace WebAPIContosoPizzaVS.Controllers
     [Route("[Controller]")]
     public class PizzaController : ControllerBase
     {
+
         public PizzaController() { }
 
         // GET all action
         [HttpGet]
-        public ActionResult<List<Pizza>> GetAll() => PizzaService.GetAll();
+        public ActionResult<List<Pizza>> GetAll() => PizzaServiceDAL.GetAll();
 
         // GET by Id action
         [HttpGet("{id}")]
         public ActionResult<Pizza> Get(int id)
         {
-            var pizza = PizzaService.Get(id);
-            if (pizza == null)
-                return NotFound();
-
-            return Ok(pizza);
+            Pizza? pizza = PizzaServiceDAL.Get(id);
+            return pizza switch
+            {
+                null => NotFound(),
+                _ => Ok(pizza)
+            };
         }
 
         // POST action
         [HttpPost]
         public IActionResult Create(Pizza pizza)
         {
-            PizzaService.Add(pizza);
+            PizzaServiceDAL.Add(pizza);
             return CreatedAtAction(nameof(Create), new { id = pizza.Id }, pizza);
         }
 
@@ -38,12 +41,16 @@ namespace WebAPIContosoPizzaVS.Controllers
         public IActionResult Update(int id, Pizza pizza)
         {
             if (id != pizza.Id)
+            {
                 return BadRequest();
+            }
 
-            if (PizzaService.Get(id) == null)
+            if (PizzaServiceDAL.Get(id) is null)
+            {
                 return NotFound();
+            }
 
-            PizzaService.Update(pizza);
+            PizzaServiceDAL.Update(pizza);
             return NoContent();
         }
 
@@ -51,10 +58,12 @@ namespace WebAPIContosoPizzaVS.Controllers
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
-            if (PizzaService.Get(id) is null)
+            if (PizzaServiceDAL.Get(id) is null)
+            {
                 return NotFound();
+            }
 
-            PizzaService.Delete(id);
+            PizzaServiceDAL.Delete(id);
             return NoContent();
         }
     }
